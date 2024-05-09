@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  signInStart,
+  signInSuccess,
+  signInFailure,
+} from "../redux/user/userSlice";
 
 const SignIn = () => {
   const [formData, setFormData] = useState({});
+  const { loading, error } = useSelector((state) => state.user);
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     setFormData({
@@ -15,6 +25,7 @@ const SignIn = () => {
     e.preventDefault();
 
     try {
+      dispatch(signInStart());
       const res = await fetch("/api/users/signin", {
         method: "POST",
         headers: {
@@ -27,10 +38,13 @@ const SignIn = () => {
       console.log(data);
 
       if (data.success === false) {
+        dispatch(signInSuccess(data.message));
         return;
       }
+      dispatch(signInSuccess(data));
+      navigate("/");
     } catch (error) {
-      console.error(error.message);
+      dispatch(signInFailure(error.message));
     }
   };
 
@@ -52,18 +66,22 @@ const SignIn = () => {
           id="password"
           onChange={handleChange}
         />
-        <button className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80">
-          Sign In
+        <button
+          disabled={loading}
+          className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+        >
+          {loading ? "Loading..." : "Sign In"}
         </button>
       </form>
       <div className="flex gap-2 mt-5">
-        <p>Don't have an account?</p>
+        <p>Dont have an account?</p>
         <Link to={"/sign-up"}>
           <span className="text-blue-700 hover:font-bold hover:uppercase">
             Sign up
           </span>
         </Link>
       </div>
+      {error && <p className="text-red-500 mt-5">{error}</p>}
     </div>
   );
 };

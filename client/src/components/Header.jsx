@@ -37,7 +37,7 @@ const Header = () => {
               <img
                 src={currentUser.avatar}
                 alt="profile"
-                className="rounded-full h-8 w-8  object-cover"
+                className="rounded-full h-8 w-8 object-cover"
               />
             ) : (
               <li className="sm:inline text-slate-700 hover:underline">

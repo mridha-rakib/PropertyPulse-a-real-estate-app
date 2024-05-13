@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 connectDB();
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/user.route.js";
+import listingRouter from "./routes/listing.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -15,6 +16,7 @@ app.use(cookieParser());
 
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/listing", listingRouter);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;

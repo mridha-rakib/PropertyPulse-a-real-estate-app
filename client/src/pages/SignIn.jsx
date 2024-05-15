@@ -21,6 +21,7 @@ export default function SignIn() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData);
     try {
       dispatch(signInStart());
       const res = await fetch("/api/auth/signin", {
@@ -31,7 +32,7 @@ export default function SignIn() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      console.log(data);
+
       if (data.success === false) {
         dispatch(signInFailure(data.message));
         return;
@@ -57,7 +58,7 @@ export default function SignIn() {
           type="password"
           placeholder="password"
           className="border p-3 rounded-lg"
-          id="current-password"
+          id="password"
           onChange={handleChange}
         />
 

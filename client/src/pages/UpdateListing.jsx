@@ -28,9 +28,9 @@ export default function CreateListing() {
     parking: false,
     furnished: false,
   });
-  const [imageUploadError, setImageUploadError] = useState("");
+  const [imageUploadError, setImageUploadError] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function CreateListing() {
       const listingId = params.listingId;
       const res = await fetch(`/api/listing/get/${listingId}`);
       const data = await res.json();
-      if (!data.success) {
+      if (data.success === false) {
         console.log(data.message);
         return;
       }
@@ -48,35 +48,41 @@ export default function CreateListing() {
     fetchListing();
   }, [params.listingId]);
 
-  const handleImageSubmit = async (e) => {
-    if (files.length > 0 && files.length + formData.imageUrls.length <= 6) {
+  const handleImageSubmit = () => {
+    if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
       setUploading(true);
-      setImageUploadError("");
+      setImageUploadError(false);
+      const promises = [];
 
-      try {
-        const urls = await Promise.all(files.map((file) => storeImage(file)));
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          imageUrls: prevFormData.imageUrls.concat(urls),
-        }));
-      } catch (err) {
-        setImageUploadError("Image upload failed (2 MB max per image)");
-      } finally {
-        setUploading(false);
+      for (let i = 0; i < files.length; i++) {
+        promises.push(storeImage(files[i]));
       }
+      Promise.all(promises)
+        .then((urls) => {
+          setFormData({
+            ...formData,
+            imageUrls: formData.imageUrls.concat(urls),
+          });
+          setImageUploadError(false);
+          setUploading(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          setImageUploadError("Image upload failed (2 mb max per image)");
+          setUploading(false);
+        });
     } else {
-      setImageUploadError("You can only upload up to 6 images per listing");
+      setImageUploadError("You can only upload 6 images per listing");
       setUploading(false);
     }
   };
 
-  const storeImage = (file) => {
+  const storeImage = async (file) => {
     return new Promise((resolve, reject) => {
       const storage = getStorage(app);
-      const fileName = `${new Date().getTime()}_${file.name}`;
+      const fileName = new Date().getTime() + file.name;
       const storageRef = ref(storage, fileName);
       const uploadTask = uploadBytesResumable(storageRef, file);
-
       uploadTask.on(
         "state_changed",
         (snapshot) => {
@@ -88,25 +94,50 @@ export default function CreateListing() {
           reject(error);
         },
         () => {
-          getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          });
         }
       );
     });
   };
 
   const handleRemoveImage = (index) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      imageUrls: prevFormData.imageUrls.filter((_, i) => i !== index),
-    }));
+    setFormData({
+      ...formData,
+      imageUrls: formData.imageUrls.filter((_, i) => i !== index),
+    });
   };
 
   const handleChange = (e) => {
-    const { id, value, checked, type } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [id]: type === "checkbox" ? checked : value,
-    }));
+    if (e.target.id === "sale" || e.target.id === "rent") {
+      setFormData({
+        ...formData,
+        type: e.target.id,
+      });
+    }
+
+    if (
+      e.target.id === "parking" ||
+      e.target.id === "furnished" ||
+      e.target.id === "offer"
+    ) {
+      setFormData({
+        ...formData,
+        [e.target.id]: e.target.checked,
+      });
+    }
+
+    if (
+      e.target.type === "number" ||
+      e.target.type === "text" ||
+      e.target.type === "textarea"
+    ) {
+      setFormData({
+        ...formData,
+        [e.target.id]: e.target.value,
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -139,7 +170,6 @@ export default function CreateListing() {
       setLoading(false);
     }
   };
-
   return (
     <main className="p-3 max-w-4xl mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">
@@ -159,6 +189,7 @@ export default function CreateListing() {
             value={formData.name}
           />
           <textarea
+            type="text"
             placeholder="Description"
             className="border p-3 rounded-lg"
             id="description"
@@ -178,9 +209,8 @@ export default function CreateListing() {
           <div className="flex gap-6 flex-wrap">
             <div className="flex gap-2">
               <input
-                type="radio"
+                type="checkbox"
                 id="sale"
-                name="type"
                 className="w-5"
                 onChange={handleChange}
                 checked={formData.type === "sale"}
@@ -189,9 +219,8 @@ export default function CreateListing() {
             </div>
             <div className="flex gap-2">
               <input
-                type="radio"
+                type="checkbox"
                 id="rent"
-                name="type"
                 className="w-5"
                 onChange={handleChange}
                 checked={formData.type === "rent"}
@@ -305,7 +334,7 @@ export default function CreateListing() {
           </p>
           <div className="flex gap-4">
             <input
-              onChange={(e) => setFiles(Array.from(e.target.files))}
+              onChange={(e) => setFiles(e.target.files)}
               className="p-3 border border-gray-300 rounded w-full"
               type="file"
               id="images"
@@ -321,10 +350,10 @@ export default function CreateListing() {
               {uploading ? "Uploading..." : "Upload"}
             </button>
           </div>
-          {imageUploadError && (
-            <p className="text-red-700 text-sm">{imageUploadError}</p>
-          )}
-          {formData.imageUrls.length > 0 &&
+          <p className="text-red-700 text-sm">
+            {imageUploadError && imageUploadError}
+          </p>
+          {formData?.imageUrls?.length > 0 &&
             formData.imageUrls.map((url, index) => (
               <div
                 key={url}
@@ -332,7 +361,7 @@ export default function CreateListing() {
               >
                 <img
                   src={url}
-                  alt="listing"
+                  alt="listing image"
                   className="w-20 h-20 object-contain rounded-lg"
                 />
                 <button

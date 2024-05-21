@@ -28,6 +28,7 @@ const CreateListing = () => {
     parking: false,
     furnished: false,
   });
+
   const [uploading, setUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState(false);
   const [error, setError] = useState(false);
@@ -101,7 +102,6 @@ const CreateListing = () => {
   };
 
   const handleChange = (e) => {
-    console.log(e.target.id);
     if (e.target.id === "sale" || e.target.id === "rent") {
       setFormData({
         ...formData,

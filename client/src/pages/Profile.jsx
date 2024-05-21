@@ -15,12 +15,9 @@ import {
   deleteUserStart,
   deleteUserSuccess,
   signOutUserStart,
-  signOutUserSuccess,
-  signInFailure,
 } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
-
 export default function Profile() {
   const fileRef = useRef(null);
   const { currentUser, loading, error } = useSelector((state) => state.user);
@@ -58,7 +55,8 @@ export default function Profile() {
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setFilePerc(Math.round(progress));
       },
-      () => {
+      (error) => {
+        console.log(error);
         setFileUploadError(true);
       },
       () => {
@@ -125,7 +123,7 @@ export default function Profile() {
       }
       dispatch(deleteUserSuccess(data));
     } catch (error) {
-      dispatch(deleteUserFailure(error?.message));
+      dispatch(deleteUserFailure(error.message));
     }
   };
 
@@ -133,19 +131,14 @@ export default function Profile() {
     try {
       setShowListingsError(false);
       const res = await fetch(`/api/user/listings/${currentUser._id}`);
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
       const data = await res.json();
-
       if (data.success === false) {
         setShowListingsError(true);
         return;
       }
+
       setUserListings(data);
     } catch (error) {
-      console.error("Error fetching user listings:", error);
       setShowListingsError(true);
     }
   };
@@ -168,7 +161,6 @@ export default function Profile() {
       console.log(error.message);
     }
   };
-
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
@@ -182,9 +174,7 @@ export default function Profile() {
         />
         <img
           onClick={() => fileRef.current.click()}
-          src={
-            (formData && formData.avatar) || (currentUser && currentUser.avatar)
-          }
+          src={formData.avatar || currentUser.avatar}
           alt="profile"
           className="rounded-full h-24 w-24 object-cover cursor-pointer self-center mt-2"
         />
@@ -204,7 +194,7 @@ export default function Profile() {
         <input
           type="text"
           placeholder="username"
-          defaultValue={currentUser && currentUser.username}
+          defaultValue={currentUser.username}
           id="username"
           className="border p-3 rounded-lg"
           onChange={handleChange}
@@ -213,7 +203,7 @@ export default function Profile() {
           type="email"
           placeholder="email"
           id="email"
-          defaultValue={currentUser && currentUser.email}
+          defaultValue={currentUser.email}
           className="border p-3 rounded-lg"
           onChange={handleChange}
         />
@@ -254,7 +244,7 @@ export default function Profile() {
         {updateSuccess ? "User is updated successfully!" : ""}
       </p>
       <button onClick={handleShowListings} className="text-green-700 w-full">
-        Show Listing
+        Show Listings
       </button>
       <p className="text-red-700 mt-5">
         {showListingsError ? "Error showing listings" : ""}
@@ -278,15 +268,16 @@ export default function Profile() {
                 />
               </Link>
               <Link
-                to={`/listing/${listing._id}`}
                 className="text-slate-700 font-semibold  hover:underline truncate flex-1"
+                to={`/listing/${listing._id}`}
               >
                 <p>{listing.name}</p>
               </Link>
+
               <div className="flex flex-col item-center">
                 <button
-                  className="text-red-700 uppercase"
                   onClick={() => handleListingDelete(listing._id)}
+                  className="text-red-700 uppercase"
                 >
                   Delete
                 </button>

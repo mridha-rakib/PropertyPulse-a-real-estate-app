@@ -1,10 +1,102 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Search = () => {
-  const [sidebardata, setSidebardata] = useState({});
-  const handleChange = () => {};
+  const [sidebardata, setSidebardata] = useState({
+    searchTerm: "",
+    type: "all",
+    parking: false,
+    furnished: false,
+    offer: false,
+    sort: "created_at",
+    order: "desc",
+  });
 
-  const handleSubmit = async () => {};
+  const [loading, setLoading] = useState(false);
+  const [listing, setListings] = useState([]);
+  const [showMore, setShowMore] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const searchTermFromUrl = urlParams.get("searchTerm");
+    const typeFromUrl = urlParams.get("type");
+    const parkingFromUrl = urlParams.get("parking");
+    const furnishedFromUrl = urlParams.get("furnished");
+    const offerFromUrl = urlParams.get("offer");
+    const sortFromUrl = urlParams.get("sort");
+    const orderFromUrl = urlParams.get("order");
+
+    if (
+      searchTermFromUrl ||
+      typeFromUrl ||
+      parkingFromUrl ||
+      furnishedFromUrl ||
+      offerFromUrl ||
+      sortFromUrl ||
+      orderFromUrl
+    ) {
+      setSidebardata({
+        searchTerm: searchTermFromUrl || "",
+        type: typeFromUrl || "all",
+        parking: parkingFromUrl === "true" ? true : false,
+        furnished: furnishedFromUrl === "true" ? true : false,
+        offer: offerFromUrl === "true" ? true : false,
+        sort: sortFromUrl || "created_at",
+        order: orderFromUrl || "desc",
+      });
+    }
+    const fetchListings = async () => {
+      setLoading(true);
+      const searchQuery = urlParams.toString();
+      const res = await fetch(`/api/listing/get?${searchQuery}`);
+      const data = await res.json();
+      setListings(data);
+      setLoading(false);
+    };
+    fetchListings();
+  }, [location.search]);
+
+  const handleChange = (e) => {
+    const { id, value, checked, type } = e.target;
+
+    if (id === "all" || id === "rent" || id === "sale") {
+      setSidebardata({ ...sidebardata, type: id });
+    }
+
+    if (id === "searchTerm") {
+      setSidebardata({ ...sidebardata, searchTerm: value });
+    }
+
+    if (id === "parking" || id === "furnished" || id === "offer") {
+      setSidebardata({
+        ...sidebardata,
+        [id]: checked || checked === "true" ? true : false,
+      });
+    }
+
+    if (id === "sort_order") {
+      const [sort, order] = value.split("_");
+      setSidebardata({ ...sidebardata, sort, order });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const urlParams = new URLSearchParams();
+
+    urlParams.set("searchTerm", sidebardata.searchTerm);
+    urlParams.set("type", sidebardata.type);
+    urlParams.set("parking", sidebardata.parking);
+    urlParams.set("furnished", sidebardata.furnished);
+    urlParams.set("offer", sidebardata.offer);
+    urlParams.set("sort", sidebardata.sort);
+    urlParams.set("order", sidebardata.order);
+    const searchQuery = urlParams.toString();
+
+    navigate(`/search?${searchQuery}`);
+  };
+
   return (
     <div className="flex flex-col md:flex-row">
       <div className="p-7  border-b-2 md:border-r-2 md:min-h-screen">

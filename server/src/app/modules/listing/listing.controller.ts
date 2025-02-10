@@ -2,13 +2,11 @@ import { zParse } from "@/utils/validators.util";
 import statuses from 'http-status';
 import { createListingSchema, updateListingSchema, deleteListingSchema, getListingSchema } from "./listing.schema";
 import asyncHandler from "@/app/middlewares/asyncHandler.middlewares";
-import { handleError } from "@/errors/handler.error";
 import { ListingRepository } from "@/app/repository/listing.repository";
 
 const createListing  = asyncHandler( async (req, res) => {
   const { body: data}  = await zParse(createListingSchema, req);
   const listing = await ListingRepository.createListing(data);
-  console.log(listing);
   res.status(statuses.CREATED).json(listing);
 });
 
@@ -16,7 +14,7 @@ const deleteListing = asyncHandler( async (req, res) => {
   const { params: listingId}  = await zParse(deleteListingSchema, req);
   const userId  = req.user?.userId as string;
   await ListingRepository.deleteListing(listingId, userId);
-  
+
   res.status(statuses.OK).json("Listing has been deleted!");
 
 });

@@ -1,13 +1,14 @@
 import express from "express";
-import { verifyToken } from "../../../utils/verifyUser.js";
+
 import { ListingController } from "./listing.controller.js";
+import { protect } from "@/app/middlewares/auth.middleware.js";
 
 
 const listingRouter = express.Router();
 
-listingRouter.route("/create").post(verifyToken, ListingController.createListing);
-listingRouter.route("/delete/:listingId").delete(verifyToken, ListingController.deleteListing);
-listingRouter.route("/update/:listingId").post(verifyToken, ListingController.updateListing);
+listingRouter.route("/create").post(protect, ListingController.createListing);
+listingRouter.route("/delete/:listingId").delete(protect, ListingController.deleteListing);
+listingRouter.route("/update/:listingId").post(protect, ListingController.updateListing);
 listingRouter.route("/get/:listingId").get(ListingController.getListing);
 listingRouter.route("/get").get(ListingController.getListings);
 

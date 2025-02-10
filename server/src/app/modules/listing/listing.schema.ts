@@ -18,29 +18,29 @@ export const listingSchemaGeneric = z.object({
 
 
 const params = {
-    params: z.object({
-        listingId: z.string({
-            required_error: "Listing Id is required",
-        })
+  params: z.object({
+    listingId: z.string({
+      required_error: "Listing Id is required",
     })
+  })
 }
 
 export const createListingSchema = z.object({
-    body: listingSchemaGeneric
+  body: listingSchemaGeneric
 })
 
 export const updateListingSchema = z.object({
-    ...params,
-    body: listingSchemaGeneric.partial(),
+  ...params,
+  body: listingSchemaGeneric.partial(),
 })
 
 export const deleteListingSchema = z.object({
-    ...params
+  ...params
 })
 
 
 export const getListingSchema = z.object({
-    ...params,
+  ...params,
 });
 
 

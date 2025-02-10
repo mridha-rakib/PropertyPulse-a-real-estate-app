@@ -13,19 +13,19 @@ declare module "express-serve-static-core" {
 }
 
 const protect = asyncHandler(async (req, res, next) => {
-    const token = req.headers.authorization as string;
-
+    const token = req.cookies.access_token;
+    console.log(token);
     if (token) {
         try {
-            const decoded = jwt.verify(token, config.jwt_secret) as any;;
+            const decoded = jwt.verify(token, config.jwt_secret) as any;
 
             const user = await UserModel.findById(decoded.userId).select("-password");
             
             if (!user) {
                 throw handleError('Unauthorized', 'UNAUTHORIZED')
             }
-           
             req.user = user;
+            next();
         }
         catch (error) {
             console.error(error);

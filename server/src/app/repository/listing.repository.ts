@@ -12,7 +12,7 @@ export const ListingRepository = {
     async deleteListing ( listingInput: DeleteListingInput, userId: string ) {
       
       const { listingId } = listingInput;
-      console.log(listingId)
+     
       if (!mongoose.Types.ObjectId.isValid(listingId) || !mongoose.Types.ObjectId.isValid(userId)) {
         throw handleError('Invalid ID format', 'BAD_REQUEST');
       }
@@ -56,7 +56,7 @@ export const ListingRepository = {
       return updatedListing?.toObject();
     },
     async getListing(listingId : GetListingInput["listingId"]) {
-      console.log(listingId)
+    
       const listing = await ListingModel.findById(listingId);
       if (!listing) {
         throw handleError("Listing not found!", 'NOT_FOUND');
